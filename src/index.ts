@@ -2,7 +2,8 @@ import { exit } from "process";
 import { Config } from "./config.js";
 import { setUser, readConfig } from "./config.js";
 import { db } from "./lib/db/index.js";
-import { createUser, getUserByName, reset } from "./lib/db/queries/users.js";
+import { createUser, getUserByName, getUsers, reset } from "./lib/db/queries/users.js";
+import { unsubscribe } from "diagnostics_channel";
 
 let cfg = {} as Config;
 
@@ -11,6 +12,7 @@ async function main() {
     registerCommand(registry, "login", handlerLogin);
     registerCommand(registry, "register", handlerRegister);
     registerCommand(registry, "reset", handlerReset);
+    registerCommand(registry, "users", handlerUsers);
 
     cfg = readConfig();
 
@@ -63,6 +65,16 @@ async function handlerRegister(cmdName: string, ...args: string[]): Promise<void
     }
 }
 
+async function handlerUsers(cmdName: string, ...args: string[]): Promise<void> {
+    const users = await getUsers();
+    for ( let user of users ){
+        if ( user.name === cfg.currentUserName ) {
+            console.log("*", user.name, "(current)");
+            continue;
+        } 
+        console.log("*", user.name);
+    }
+}
 async function handlerReset(cmdName: string, ...args: string[]): Promise<void> {
     await reset();
 }
