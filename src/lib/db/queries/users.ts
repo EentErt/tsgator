@@ -1,3 +1,4 @@
+import { UUID } from "crypto";
 import { db } from "..";
 import { users } from "../schema";
 import { eq } from "drizzle-orm";
@@ -18,5 +19,10 @@ export async function reset() {
 
 export async function getUsers() {
     const result = await db.select().from(users);
+    return result;
+}
+
+export async function getUserById(id: string) {
+    const [result] = await db.select().from(users).where(eq(users.id, id));
     return result;
 }

@@ -2,8 +2,9 @@ import { exit } from "process";
 import { Config } from "./config.js";
 import { setUser, readConfig } from "./config.js";
 import { db } from "./lib/db/index.js";
-import { createUser, getUserByName, getUsers, reset } from "./lib/db/queries/users.js";
-import { unsubscribe } from "diagnostics_channel";
+import { createUser, getUserByName, getUserById, getUsers, reset } from "./lib/db/queries/users.js";
+import { addFeed, getFeeds, Feed } from "./lib/db/queries/feeds.js"
+import { fetchFeed } from "./fetchfeed.js";
 
 let cfg = {} as Config;
 
@@ -13,6 +14,9 @@ async function main() {
     registerCommand(registry, "register", handlerRegister);
     registerCommand(registry, "reset", handlerReset);
     registerCommand(registry, "users", handlerUsers);
+    registerCommand(registry, "agg", handlerAgg);
+    registerCommand(registry, "addfeed", handlerAddFeed);
+    registerCommand(registry, "feeds", handlerFeeds);
 
     cfg = readConfig();
 
@@ -75,6 +79,45 @@ async function handlerUsers(cmdName: string, ...args: string[]): Promise<void> {
         console.log("*", user.name);
     }
 }
+
+async function handlerAgg(cmdName: string, ...args: string[]): Promise<void> {
+    try {
+        const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
+        console.log(JSON.stringify(feed));
+    } catch(error) {
+        console.log(error)
+    };
+}
+
+async function handlerAddFeed(cmdName: string, ...args: string[]): Promise<void> {
+    const user = await getUserByName(cfg.currentUserName);
+    if (args.length < 2) {
+        throw new Error("addfeed requires a feed name and URL");
+    }
+
+    try {
+        await addFeed(args[0], args[1], user.id);
+    } catch(error) {
+        throw error;
+    }
+    
+}
+
+async function handlerFeeds(cmdName: string, ...args: string[]): Promise<void> {
+    const feeds = await getFeeds();
+
+    for (let feed of feeds) {
+        await printFeed(feed);
+    }
+}
+
+async function printFeed(feed: Feed) {
+    console.log(feed.name);
+    console.log(feed.url);
+    const user = await getUserById(feed.userId);
+    console.log(user.name)
+}
+
 async function handlerReset(cmdName: string, ...args: string[]): Promise<void> {
     await reset();
 }
