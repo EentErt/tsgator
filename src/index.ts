@@ -3,10 +3,12 @@ import { Config } from "./config.js";
 import { setUser, readConfig } from "./config.js";
 import { db } from "./lib/db/index.js";
 import { createUser, getUserByName, getUserById, getUsers, reset } from "./lib/db/queries/users.js";
-import { addFeed, getFeeds, Feed } from "./lib/db/queries/feeds.js"
+import { addFeed, getFeeds, Feed, getFeedByUrl } from "./lib/db/queries/feeds.js"
 import { fetchFeed } from "./fetchfeed.js";
-
-let cfg = {} as Config;
+import { createFeedFollow, getFeedFollowsByUserId } from "./lib/db/queries/feed_follows.js";
+import { feed_follows } from "./lib/db/schema.js";
+import { registerCommand, CommandsRegistry, runCommand, handlerLogin, handlerRegister, handlerUsers, handlerAgg, handlerAddFeed, handlerFeeds, handlerFollow, handlerFollowing, handlerReset } from "./handlers.js";
+import { UserCommandHandler, middlewareLoggedIn } from "./middleware.js";
 
 async function main() {
     let registry = {} as CommandsRegistry;
@@ -15,10 +17,10 @@ async function main() {
     registerCommand(registry, "reset", handlerReset);
     registerCommand(registry, "users", handlerUsers);
     registerCommand(registry, "agg", handlerAgg);
-    registerCommand(registry, "addfeed", handlerAddFeed);
+    registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddFeed));
     registerCommand(registry, "feeds", handlerFeeds);
-
-    cfg = readConfig();
+    registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
+    registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
 
     const args = process.argv.slice(2);
     console.log("Running command:", args[0])
@@ -31,6 +33,7 @@ async function main() {
     process.exit(0);
 }
 
+/*
 type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 
 async function handlerLogin(cmdName: string, ...args: string[]): Promise<void> {
@@ -97,6 +100,7 @@ async function handlerAddFeed(cmdName: string, ...args: string[]): Promise<void>
 
     try {
         await addFeed(args[0], args[1], user.id);
+        await createFeedFollow(user.id, (await getFeedByUrl(args[1])).id);
     } catch(error) {
         throw error;
     }
@@ -108,6 +112,32 @@ async function handlerFeeds(cmdName: string, ...args: string[]): Promise<void> {
 
     for (let feed of feeds) {
         await printFeed(feed);
+    }
+}
+
+async function handlerFollow(cmdName: string, ...args: string[]): Promise<void> {
+    const user = await getUserByName(cfg.currentUserName);
+    if (args.length < 1) {
+        throw new Error("follow requires a feed URL");
+    }
+
+    const feed = await getFeedByUrl(args[0]);
+
+    try {
+        await createFeedFollow(user.id, feed.id);
+        console.log(user.name, "is now following", feed.name);
+    } catch(error) {
+        throw error;
+    }
+}
+
+async function handlerFollowing(cmdName: string, ...args: string[]): Promise<void> {
+    const user = await getUserByName(cfg.currentUserName);
+
+    const follows = await getFeedFollowsByUserId(user.id);
+
+    for (let follow of follows) {
+        await printFeed(follow.feeds);
     }
 }
 
@@ -136,7 +166,7 @@ async function runCommand(registry: CommandsRegistry, cmdName: string, ...args: 
 
     await handler(cmdName, ...args);
 }
-
+*/
 
 
 

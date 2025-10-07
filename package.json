@@ -5,6 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "db:update": "drizzle-kit generate && drizzle-kit migrate",
     "start": "tsx ./src/index.ts"
   },
   "keywords": [],

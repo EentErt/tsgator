@@ -15,6 +15,20 @@
       "when": 1759104420172,
       "tag": "0001_amusing_felicia_hardy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759640190030,
+      "tag": "0002_special_snowbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1759648691945,
+      "tag": "0003_complete_rachel_grey",
+      "breakpoints": true
     }
   ]
 }
