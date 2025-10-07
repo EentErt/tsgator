@@ -1,6 +1,27 @@
 import { XMLParser } from "fast-xml-parser"
+import { getNextFeed } from "./lib/db/queries/feeds.js"
 
-export async function fetchFeed(feedURL: string) {
+export async function scrapeFeeds() {
+    const feed = await getNextFeed();
+    if (!feed) {
+        throw new Error("no feeds to fetch");
+    }
+
+    console.log("Fetching feed:", feed.name, feed.url);
+    try {
+        const rss = await fetchFeed(feed.url);
+        for (let item of rss.channel.item) {
+            console.log(item.title);
+            console.log(item.link);
+            console.log(item.pubDate);
+            console.log("");
+        }
+    } catch(error) {
+        throw error;
+    }
+}
+
+export async function fetchFeed(feedURL: string): Promise<RSSFeed> {
     const init: RequestInit = {
         headers: {
             "User-Agent": "gator",

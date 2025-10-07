@@ -1,8 +1,8 @@
 import { setUser, readConfig } from "./config.js";
 import { getUserByName, createUser, getUsers, getUserById, reset, User } from "./lib/db/queries/users.js";
 import { addFeed, getFeedByUrl, getFeeds, Feed } from "./lib/db/queries/feeds.js";
-import { createFeedFollow, getFeedFollowsByUserId } from "./lib/db/queries/feed_follows.js";
-import { fetchFeed } from "./fetchfeed.js";
+import { createFeedFollow, deleteFeedFollow, getFeedFollowsByUserId } from "./lib/db/queries/feed_follows.js";
+import { fetchFeed, scrapeFeeds } from "./fetchfeed.js";
 import { UserCommandHandler } from "./middleware.js";
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
@@ -58,12 +58,51 @@ export async function handlerUsers(cmdName: string, ...args: string[]): Promise<
 }
 
 export async function handlerAgg(cmdName: string, ...args: string[]): Promise<void> {
-    try {
-        const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
-        console.log(JSON.stringify(feed));
-    } catch(error) {
-        console.log(error)
-    };
+    if (args.length < 1) {
+        throw new Error("agg requires a wait time")
+    }
+
+    const waitTime = parseDuration(args[0]);
+    console.log("Collecting feeds every", args[0]);
+    scrapeFeeds().catch(handleError);
+
+    const interval = setInterval(() => {
+        scrapeFeeds().catch(handleError);
+    }, waitTime);
+
+    await new Promise<void>((resolve) => {
+        process.on("SIGINT", () => {
+            console.log("Shutting down feed aggregator...");
+            clearInterval(interval);
+            resolve();
+        });
+    });
+}
+
+function handleError(error: any) {
+    console.log("Error:", error);
+}
+
+function parseDuration(durationStr: string): number {
+    const regex = /^(\d+)(ms|s|m|h)$/;
+    const match = durationStr.match(regex);
+    if (!match || match.length !== 3) {
+        throw new Error("Invalid time format");
+    }
+
+    switch (match[2]) {
+        case "ms":
+            return parseInt(match[1]);
+        case "s":
+            return parseInt(match[1]) * 1000;
+        case "m":
+            return parseInt(match[1]) * 60 * 1000;
+        case "h":
+            return parseInt(match[1]) * 60 * 60 * 1000;
+        default:
+            throw new Error("Invalid time format");
+    }
+    
 }
 
 export async function handlerAddFeed(cmdName: string, user: User, ...args: string[]): Promise<void> {
@@ -108,6 +147,21 @@ export async function handlerFollowing(cmdName: string, user: User, ...args: str
 
     for (let follow of follows) {
         await printFeed(follow.feeds);
+    }
+}
+
+export async function handlerUnfollow(cmdName: string, user: User, ...args: string[]): Promise<void> {
+    if (args.length < 1) {
+        throw new Error("unfollow requires a feed URL");
+    }
+
+    const feed = await getFeedByUrl(args[0]);
+
+    try {
+        await deleteFeedFollow(user.id, feed.id);
+        console.log("Unfollowed", feed.name);
+    } catch(error) {
+        throw error;
     }
 }
 

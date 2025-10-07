@@ -18,3 +18,13 @@ export async function getFeedByUrl(url: string) {
     const [result] = await db.select().from(feeds).where(eq(feeds.url, url));
     return result;
 }
+
+export async function markFeedFetched(feedId: string) {
+    await db.update(feeds).set({ lastFetchedAt: new Date() }).where(eq(feeds.id, feedId));
+    await db.update(feeds).set({ updatedAt: new Date() }).where(eq(feeds.id, feedId));
+}
+
+export async function getNextFeed(): Promise<Feed> {
+    const [result] = await db.execute(`SELECT * FROM feeds ORDER BY last_fetched_at ASC NULLS FIRST LIMIT 1`);
+    return result as Feed;
+}

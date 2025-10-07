@@ -15,3 +15,7 @@ export async function getFeedFollowsByUserId(userId: string) {
         .innerJoin(feeds, eq(feed_follows.feedId, feeds.id));
     return result;
 }
+
+export async function deleteFeedFollow(userId: string, feedId: string) {
+    await db.delete(feed_follows).where((eq(feed_follows.userId, userId) && eq(feed_follows.feedId, feedId)));
+}
