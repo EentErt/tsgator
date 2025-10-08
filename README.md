@@ -1,6 +1,6 @@
 # Gator 🐊
 
-Gator is a CLI for browsing rss feeds featuring user-based data storage, following of feeds, and nothing else of note.
+gator is a CLI for browsing rss feeds featuring user-based data storage, following of feeds, and nothing else of note.
 
 ## What You'll Need
 
