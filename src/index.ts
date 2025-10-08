@@ -7,7 +7,7 @@ import { addFeed, getFeeds, Feed, getFeedByUrl, getNextFeed } from "./lib/db/que
 import { fetchFeed } from "./fetchfeed.js";
 import { createFeedFollow, getFeedFollowsByUserId } from "./lib/db/queries/feed_follows.js";
 import { feed_follows } from "./lib/db/schema.js";
-import { registerCommand, CommandsRegistry, runCommand, handlerLogin, handlerRegister, handlerUsers, handlerAgg, handlerAddFeed, handlerFeeds, handlerFollow, handlerFollowing, handlerReset, handlerUnfollow } from "./handlers.js";
+import { registerCommand, CommandsRegistry, runCommand, handlerLogin, handlerRegister, handlerBrowse, handlerUsers, handlerAgg, handlerAddFeed, handlerFeeds, handlerFollow, handlerFollowing, handlerReset, handlerUnfollow } from "./handlers.js";
 import { UserCommandHandler, middlewareLoggedIn } from "./middleware.js";
 
 async function main() {
@@ -22,6 +22,7 @@ async function main() {
     registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
     registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
     registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow));
+    registerCommand(registry, "browse", middlewareLoggedIn(handlerBrowse));
 
     const args = process.argv.slice(2);
     console.log("Running command:", args[0])

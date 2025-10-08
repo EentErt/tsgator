@@ -4,6 +4,7 @@ import { addFeed, getFeedByUrl, getFeeds, Feed } from "./lib/db/queries/feeds.js
 import { createFeedFollow, deleteFeedFollow, getFeedFollowsByUserId } from "./lib/db/queries/feed_follows.js";
 import { fetchFeed, scrapeFeeds } from "./fetchfeed.js";
 import { UserCommandHandler } from "./middleware.js";
+import { getPostsForUser } from "./lib/db/queries/posts.js";
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 
@@ -170,6 +171,16 @@ async function printFeed(feed: Feed) {
     console.log(feed.url);
     const user = await getUserById(feed.userId);
     console.log(user.name)
+}
+
+export async function handlerBrowse(cmdName: string, user: User, ...args: string[]): Promise<void> {
+    const result = await getPostsForUser(user, args[0] ? parseInt(args[0]) : undefined);
+    for (let item of result) {
+        console.log(item.posts.title);
+        console.log(item.posts.url);
+        console.log(item.posts.publishedAt);
+        console.log(item.posts.description ? item.posts.description + "\n" : "" );
+    }
 }
 
 export async function handlerReset(cmdName: string, ...args: string[]): Promise<void> {

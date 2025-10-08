@@ -1,6 +1,6 @@
 import { db } from "..";
 import { feed_follows, posts } from "../schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { User } from "./users";
 
 export async function createPost(title: string, url: string, publishedAt: Date, feedId: string, description?: string) {
@@ -13,7 +13,12 @@ export async function createPost(title: string, url: string, publishedAt: Date, 
     })
 }
 
-export async function getPostsForUser(user: User, limit: number = 10) {
-    const result = await db.select().from(posts).innerJoin(feed_follows, eq(posts.feedId, feed_follows.feedId)).where(eq(feed_follows.userId, user.id)).limit(limit);
+export async function getPostByUrl(url: string) {
+    const [result] = await db.select().from(posts).where(eq(posts.url, url));
+    return result;
+}
+
+export async function getPostsForUser(user: User, limit: number = 2) {
+    const result = await db.select().from(posts).innerJoin(feed_follows, eq(posts.feedId, feed_follows.feedId)).orderBy(desc(posts.publishedAt)).where(eq(feed_follows.userId, user.id)).limit(limit);
     return result;
 }
